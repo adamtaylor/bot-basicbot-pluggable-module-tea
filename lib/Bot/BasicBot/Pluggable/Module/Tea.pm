@@ -1,8 +1,8 @@
 # ABSTRACT: Tea round organising IRC bot
 package Bot::BasicBot::Pluggable::Module::Tea;
 
-use warnings;
-use strict;
+use Moose;
+extends 'Bot::BasicBot::Pluggable::Module';
 
 =head1 NAME
 
@@ -22,23 +22,33 @@ Then when you fancy a brew, just issue the C<!tea> command:
 
 =cut
 
-extends 'Bot::BasicBot::Pluggable::Module';
-
 sub help {
-    return "This plugin helps facilitae tea making within a team. Simply
-        issue the `!tea` command when you fancy a brew and someone will
-        be selected at random from the channel to make the tea round".
+    my $help = "This plugin helps facilitae tea making within a team. Simply "
+        . "issue the `!tea` command when you fancy a brew and someone will "
+        . "be selected at random from the channel to make the tea round";
+
+    return $help;
 }
 
-sub seen {
+sub told {
     my ( $self, $msg ) = @_;
 
     my $body = $msg->{body};
+    my $who  = $msg->{who};
+    my $chan = $msg->{channel};
 
     if ( $body =~ /!tea/ ) {
-        my @nicks = $self->bot->pocoirc->nicks;
-        my $brew_maker = $nicks[int(rand(scalar @nicks - 1))] # randomly selected
-        return "would like a brew! $brew_maker: your turn!";
+
+        my @nicks = $self->bot->pocoirc->channel_list( $chan );
+
+        my $brew_maker;
+        do {
+            $brew_maker = $nicks[int(rand(scalar @nicks - 1))];
+        } until $brew_maker ne $self->bot->nick;
+
+        my $resp = "$who would like a brew! $brew_maker: your turn!";
+
+        return $resp;
     }
 
     return;
