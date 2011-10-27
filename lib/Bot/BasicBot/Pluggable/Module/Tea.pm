@@ -22,6 +22,7 @@ Then when you fancy a brew, just issue the C<!tea> command:
 
 =cut
 
+
 sub help {
     my $help = "This plugin helps facilitae tea making within a team. Simply "
         . "issue the `!tea` command when you fancy a brew and someone will "
@@ -30,29 +31,44 @@ sub help {
     return $help;
 }
 
-sub told {
-    my ( $self, $msg ) = @_;
+{
+    my @nick_list;
 
-    my $body = $msg->{body};
-    my $who  = $msg->{who};
-    my $chan = $msg->{channel};
+    sub told {
+        my ( $self, $msg ) = @_;
 
-    if ( $body =~ /!tea/ ) {
+        my $body = $msg->{body};
+        my $who  = $msg->{who};
+        my $chan = $msg->{channel};
 
-        my @nicks = $self->bot->pocoirc->channel_list( $chan );
+        if ( $body =~ /!tea/ ) {
 
-        my $brew_maker;
-        do {
-            $brew_maker = $nicks[int(rand(scalar @nicks - 1))];
-        } until $brew_maker ne $self->bot->nick;
+            my @all_nicks = $self->bot->pocoirc->channel_list( $chan );
 
-        my $resp = "$who would like a brew! $brew_maker: your turn!";
+            for my $nick (@all_nicks) {
+                # insert new nick if not already in list and isn't the bot itself
+                unless (scalar(grep {$_ eq $nick} @nick_list) || ($nick eq $self->bot->nick)) {
+                    splice(@nick_list, int(rand(@nick_list - 1)), 0, $nick);
+                }
+            }
 
-        return $resp;
+            # rotate list until first nick is in the room
+            while (!grep {$nick_list[0] eq $_} @all_nicks) {
+                push @nick_list, shift @nick_list;
+            }
+
+            my $brew_maker = $nick_list[0];
+
+            my $resp = "$who would like a brew! $brew_maker: your turn!";
+
+            # take the first nick and put them to the back of the list
+            push @nick_list, shift @nick_list;
+
+            return $resp;
+        }
+
+        return;
     }
-
-    return;
-
 }
 
 1;
