@@ -2,6 +2,9 @@
 package Bot::BasicBot::Pluggable::Module::Tea;
 
 use Moose;
+use DateTime;
+use List::Util qw(shuffle);
+
 extends 'Bot::BasicBot::Pluggable::Module';
 
 =head1 NAME
@@ -33,6 +36,7 @@ sub help {
 
 {
     my @nick_list;
+    my $last_used = DateTime->now;
 
     sub told {
         my ( $self, $msg ) = @_;
@@ -42,7 +46,6 @@ sub help {
         my $chan = $msg->{channel};
 
         if ( $body =~ /!tea/ ) {
-
             my @all_nicks = $self->bot->pocoirc->channel_list( $chan );
 
             for my $nick (@all_nicks) {
@@ -52,6 +55,12 @@ sub help {
                 }
             }
 
+            my $extra = '';
+            if (DateTime->now > $last_used->clone->add(hours => 8)) {
+                @nick_list = shuffle(@nick_list);
+                $extra = ' (the rota was rewritten due to inactivity)';
+            }
+
             # rotate list until first nick is in the room
             while (!grep {$nick_list[0] eq $_} @all_nicks) {
                 push @nick_list, shift @nick_list;
@@ -59,10 +68,12 @@ sub help {
 
             my $brew_maker = $nick_list[0];
 
-            my $resp = "$who would like a brew! $brew_maker: your turn!";
+            my $resp = "$who would like a brew! $brew_maker: your turn!$extra";
 
             # take the first nick and put them to the back of the list
             push @nick_list, shift @nick_list;
+
+            $last_used = DateTime->now;
 
             return $resp;
         }
