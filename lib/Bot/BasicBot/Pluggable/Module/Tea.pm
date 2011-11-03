@@ -28,8 +28,9 @@ Then when you fancy a brew, just issue the C<!tea> command:
 
 sub help {
     my $help = "This plugin helps facilitae tea making within a team. Simply "
-        . "issue the `!tea` command when you fancy a brew and someone will "
-        . "be selected at random from the channel to make the tea round";
+        . "issue the `!tea` command when you fancy a brew and a new tea round"
+        . "will begin. If you want to live on the edge issue the `!russiantea`"
+        . "command to have someone at random selected to make the tea";
 
     return $help;
 }
@@ -45,9 +46,9 @@ sub help {
         my $who  = $msg->{who};
         my $chan = $msg->{channel};
 
-        if ( $body =~ /!tea/ ) {
-            my @all_nicks = $self->bot->pocoirc->channel_list( $chan );
+        my @all_nicks = $self->bot->pocoirc->channel_list( $chan );
 
+        if ( $body =~ /^!tea$/ ) {
             for my $nick (@all_nicks) {
                 # insert new nick if not already in list and isn't the bot itself
                 unless (scalar(grep {$_ eq $nick} @nick_list) || ($nick eq $self->bot->nick)) {
@@ -74,6 +75,18 @@ sub help {
             push @nick_list, shift @nick_list;
 
             $last_used = DateTime->now;
+
+            return $resp;
+        }
+
+        if ( $body =~ /^!russiantea$/ ) {
+            # Choose a random nick from the channel
+            my $brew_maker;
+            do {
+                $brew_maker = $all_nicks[int(rand(scalar @all_nicks - 1))];
+            } until $brew_maker ne $self->bot->nick;
+
+            my $resp = "$who would like a brew! $brew_maker: your turn!";
 
             return $resp;
         }
