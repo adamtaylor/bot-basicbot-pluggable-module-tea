@@ -37,7 +37,45 @@ sub help {
 
 {
     my @nick_list;
+    my @selected_nick_list;
     my $last_used = DateTime->now;
+
+    sub select_brew_maker {
+        my $self = shift;
+        my $chan = shift;
+
+        my @all_nicks = $self->bot->pocoirc->channel_list( $chan );
+
+        for my $nick (@all_nicks) {
+            # insert new nick if not already in list and isn't the bot itself
+            unless (scalar(grep {$_ eq $nick} @nick_list) || ($nick eq $self->bot->nick)) {
+                splice(@nick_list, int(rand(@nick_list - 1)), 0, $nick);
+            }
+        }
+
+        my $extra = '';
+        if (DateTime->now > $last_used->clone->add(hours => 8)) {
+            @nick_list = shuffle(@nick_list);
+            @selected_nick_list = [];
+            $extra = ' (the rota was rewritten due to inactivity)';
+        }
+
+        # rotate list until first nick is in the room
+        while (!grep {$nick_list[0] eq $_} @all_nicks) {
+            push @nick_list, shift @nick_list;
+        }
+
+        my $brew_maker = shift @nick_list;
+
+        # take the first nick and put them to the back of the list
+        push @nick_list, $brew_maker;
+        # maintain a list of previously selected tea makers
+        push @selected_nick_list, $brew_maker;
+
+        $last_used = DateTime->now;
+
+        return ($brew_maker,$extra);
+    }
 
     sub told {
         my ( $self, $msg ) = @_;
@@ -49,34 +87,18 @@ sub help {
         my @all_nicks = $self->bot->pocoirc->channel_list( $chan );
 
         if ( $body =~ /^!tea$/ ) {
-            for my $nick (@all_nicks) {
-                # insert new nick if not already in list and isn't the bot itself
-                unless (scalar(grep {$_ eq $nick} @nick_list) || ($nick eq $self->bot->nick)) {
-                    splice(@nick_list, int(rand(@nick_list - 1)), 0, $nick);
-                }
-            }
 
-            my $extra = '';
-            if (DateTime->now > $last_used->clone->add(hours => 8)) {
-                @nick_list = shuffle(@nick_list);
-                $extra = ' (the rota was rewritten due to inactivity)';
-            }
-
-            # rotate list until first nick is in the room
-            while (!grep {$nick_list[0] eq $_} @all_nicks) {
-                push @nick_list, shift @nick_list;
-            }
-
-            my $brew_maker = $nick_list[0];
+            my ($brew_maker,$extra) = $self->select_brew_maker( $chan );
 
             my $resp = "$who would like a brew! $brew_maker: your turn!$extra";
-
-            # take the first nick and put them to the back of the list
-            push @nick_list, shift @nick_list;
-
-            $last_used = DateTime->now;
-
             return $resp;
+        }
+
+        if ( $body =~ /^!tea away$/ ) {
+            my $previous_tea_maker = pop @selected_nick_list;
+            my ($brew_maker, $extra) = $self->select_brew_maker( $chan );
+            unshift @nick_list, $previous_tea_maker;
+            return "$who says $previous_tea_maker is AWOL. $brew_maker, take over!";
         }
 
         if ( $body =~ /^!russiantea$/ ) {
@@ -89,6 +111,10 @@ sub help {
             my $resp = "$who would like a brew! $brew_maker: your turn!";
 
             return $resp;
+        }
+
+        if ( $body =~ /^!coffee/ ) {
+            return "$who-- # no coffee here!";
         }
 
         return;
