@@ -65,7 +65,7 @@ sub help {
             push @nick_list, shift @nick_list;
         }
 
-        my $brew_maker = shift @nick_list;
+        my $brew_maker = $nick_list[0];
 
         # take the first nick and put them to the back of the list
         push @nick_list, $brew_maker;
