@@ -68,7 +68,7 @@ sub help {
         my $brew_maker = $nick_list[0];
 
         # take the first nick and put them to the back of the list
-        push @nick_list, $brew_maker;
+        push @nick_list, shift @nick_list;
         # maintain a list of previously selected tea makers
         push @selected_nick_list, $brew_maker;
 
