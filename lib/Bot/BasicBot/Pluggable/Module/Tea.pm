@@ -94,25 +94,43 @@ sub help {
             return $resp;
         }
 
-        if ( $body =~ /^!tea away$/ ) {
-            my $previous_tea_maker = pop @selected_nick_list;
-            my ($brew_maker, $extra) = $self->select_brew_maker( $chan );
-            unshift @nick_list, $previous_tea_maker;
-            return "$who says $previous_tea_maker is AWOL. $brew_maker, take over!";
+        # Process tea commands
+        if ( $body =~ /^!tea.*$/ ) {
+
+            my @commands = split /\s/, $body;
+
+            if ( $commands[1] eq 'away' ) {
+                # Choose a new tea maker and pop the previous maker back
+                my $previous_tea_maker = pop @selected_nick_list;
+                my ($brew_maker, $extra) = $self->select_brew_maker( $chan );
+                unshift @nick_list, $previous_tea_maker;
+                return "$who says $previous_tea_maker is AWOL. $brew_maker, take over!";
+            }
+            elsif ( $commands[1] eq 'volunteer' ) {
+                # If you volunteer, go to back of list
+                @nick_list = grep {!/$who/} @nick_list;
+                push @nick_list, $who;
+                return "$who has volunteered to make a round. $who++";
+            }
+            elsif ( $commands[1] eq 'random' ) {
+                # Choose a random nick from the channel
+                my $brew_maker;
+                do {
+                    $brew_maker = $all_nicks[int(rand(scalar @all_nicks - 1))];
+                } until $brew_maker ne $self->bot->nick;
+
+                return "$who would like a brew! $brew_maker: your turn!";
+            }
+            elsif ( $commands[1] eq 'status' ) {
+                return "Tea round status is: " . join ',', @nick_list;
+            }
+            else {
+                return "$who-- # Imbecile! [unknown command]";
+            }
+
         }
 
-        if ( $body =~ /^!russiantea$/ ) {
-            # Choose a random nick from the channel
-            my $brew_maker;
-            do {
-                $brew_maker = $all_nicks[int(rand(scalar @all_nicks - 1))];
-            } until $brew_maker ne $self->bot->nick;
-
-            my $resp = "$who would like a brew! $brew_maker: your turn!";
-
-            return $resp;
-        }
-
+        # No coffee allowed!
         if ( $body =~ /^!coffee/ ) {
             return "$who-- # no coffee here!";
         }
