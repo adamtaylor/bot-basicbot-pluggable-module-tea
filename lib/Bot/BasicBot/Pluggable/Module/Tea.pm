@@ -100,10 +100,13 @@ sub help {
             my @commands = split /\s/, $body;
 
             if ( $commands[1] eq 'away' ) {
+                # WARNING: insani-tea :)
                 # Choose a new tea maker and pop the previous maker back
                 my $previous_tea_maker = pop @selected_nick_list;
                 my ($brew_maker, $extra) = $self->select_brew_maker( $chan );
+                splice(@nick_list,-2); # remove them from the tail of the tea round
                 unshift @nick_list, $previous_tea_maker;
+                push @nick_list,$who;
                 return "$who says $previous_tea_maker is AWOL. $brew_maker, take over!";
             }
             elsif ( $commands[1] eq 'volunteer' ) {
