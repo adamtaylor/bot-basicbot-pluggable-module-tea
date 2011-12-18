@@ -41,27 +41,21 @@ sub help {
     sub select_brew_maker {
         my $self = shift;
         my $chan = shift;
-        
-        my $extra = '';
-        if (DateTime->now > $last_used->clone->add(hours => 8)) {
-            @nick_list = shuffle(@nick_list);
-            $extra = ' (the rota was rewritten due to inactivity)';
-        }
 
         my $brew_maker = $nick_list[0];
-
+        
         # take the first nick and put them to the back of the list
         push @nick_list, shift @nick_list;
 
         $last_used = DateTime->now;
 
-        return ($brew_maker,$extra);
+        return $brew_maker;
     }
 
     sub chanjoin {
         my ( $self, $msg ) = @_;
-		# someone joined look at the current array of nicks and add the new person in a random place
-		my @all_nicks = $self->bot->pocoirc->channel_list( $msg->{channel} );
+        # someone joined look at the current array of nicks and add the new person in a random place
+        my @all_nicks = $self->bot->pocoirc->channel_list( $msg->{channel} );
 
         for my $nick (@all_nicks) {
             # insert new nick if not already in list and isn't the bot itself
@@ -69,9 +63,9 @@ sub help {
                 splice(@nick_list, int(rand(@nick_list - 1)), 0, $nick);
             }
         }
-	}
-	
-	#didn't work so instead we tidy_lists as part of the start of told
+    }
+
+    #didn't work so instead we tidy_lists as part of the start of told
     # sub chanpart {
     #         my ( $self, $msg ) = @_;
     #       # someone left the room rebuild the lists but don't change the order
@@ -83,9 +77,15 @@ sub help {
         my @all_nicks = $self->bot->pocoirc->channel_list( $chan );
         # don't tell Gianni I used ~~
         @nick_list = grep { $_ ~~ @all_nicks && $_ ne $self->bot->nick } @nick_list;
-        # @selected_nick_list = grep { $_ ~~ @all_nicks } @selected_nick_list;
+
+        my $extra = '';
+        if (DateTime->now > $last_used->clone->add(hours => 8)) {
+            @nick_list = shuffle(@nick_list);
+            $extra = ' (the rota was rewritten due to inactivity)';
+        }
+        return $extra;
     }
-    
+
     sub told {
         my ( $self, $msg ) = @_;
 
@@ -96,11 +96,11 @@ sub help {
         my @all_nicks = $self->bot->pocoirc->channel_list( $chan );
         #init the nick list if we don't have it already
         $self->chanjoin( $msg ) unless $#nick_list > 0;
-        $self->tidy_lists( $msg->{channel} );
+        my $extra = $self->tidy_lists( $msg->{channel} );
         
         if ( $body =~ /^!tea$/ ) {
 
-            my ($brew_maker,$extra) = $self->select_brew_maker( $chan );
+            my $brew_maker = $self->select_brew_maker( $chan );
 
             my $resp = "$who would like a brew! $brew_maker: your turn!$extra";
             return $resp;
@@ -114,7 +114,7 @@ sub help {
             if ( $commands[1] eq 'away' ) {
                 # Choose a new tea maker and pop the previous maker back
                 my $person_away = pop @nick_list;
-                my ($brew_maker, $extra) = $self->select_brew_maker( $chan );
+                my $brew_maker = $self->select_brew_maker( $chan );
                 unshift @nick_list, $person_away;
                 return "$who says $person_away is AWOL. $brew_maker, take over!";
             }
