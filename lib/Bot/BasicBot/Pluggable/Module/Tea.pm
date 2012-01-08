@@ -7,6 +7,8 @@ use List::Util qw(shuffle);
 
 extends 'Bot::BasicBot::Pluggable::Module';
 
+our $VERSION = "0.0011";       
+
 =head1 NAME
 
 Bot::BasicBot::Pluggable::Module::Tea - Organise tea rounds via IRC.
@@ -135,6 +137,9 @@ sub help {
             }
             elsif ( $commands[1] eq 'status' ) {
                 return "Tea round status is: " . join ',', @nick_list;
+            }
+            elsif ( $commands[1] eq 'version' ) {
+                return "This is teabot version $VERSION";
             }
             else {
                 return "$who-- # Imbecile! [unknown command]";
