@@ -21,19 +21,31 @@ You will need to load the module into your instance:
 
 Then when you fancy a brew, just issue the C<!tea> command:
 
-    <adam> tea!
-    <George> adam wants a brew. kristian make a tea round!
+    <adam> !tea
+    <George> adam would like a brew! kristian: your turn!
     <kristian> d'oh!
 
 =cut
 
 sub help {
-    my $help = "This plugin helps facilitae tea making within a team. Simply "
-        . "issue the `!tea` command when you fancy a brew and a new tea round"
-        . "will begin. If you want to live on the edge issue the `!russiantea`"
-        . "command to have someone at random selected to make the tea";
 
-    return $help;
+    return <<HELPMSG;
+        This plugin helps facilitae tea making within a team. Simply
+        issue the `!tea` command when you fancy a brew and a new tea round
+        will begin.
+
+        If the user selected is away, issue `!tea away` and another user
+        will be selected.
+
+        If you want to jump in the queue and make a round of tea, issue the
+        `!tea volunteer` command.
+
+        If you want to see the current tea round status, issue `!tea status`.
+
+        If you want to live on the edge issue the `!tea random` command to have
+        someone at random selected to make the tea
+HELPMSG
+
 }
 
 {
@@ -45,7 +57,7 @@ sub help {
         my $chan = shift;
 
         my $brew_maker = $nick_list[0];
-        
+
         # take the first nick and put them to the back of the list
         push @nick_list, shift @nick_list;
 
@@ -66,13 +78,6 @@ sub help {
             }
         }
     }
-
-    #didn't work so instead we tidy_lists as part of the start of told
-    # sub chanpart {
-    #         my ( $self, $msg ) = @_;
-    #       # someone left the room rebuild the lists but don't change the order
-    #         $self->tidy_lists( $msg->{channel} );
-    #   }
 
     sub tidy_lists {
         my ( $self, $chan ) = @_;
@@ -99,7 +104,7 @@ sub help {
         #init the nick list if we don't have it already
         $self->chanjoin( $msg ) unless $#nick_list > 0;
         my $extra = $self->tidy_lists( $msg->{channel} );
-        
+
         if ( $body =~ /^!tea$/ ) {
 
             my $brew_maker = $self->select_brew_maker( $chan );
@@ -157,3 +162,9 @@ sub help {
 }
 
 1;
+
+=head1 CONTRIBUTORS
+
+Kristian Flint - <bmxkris@cpan.org>
+
+Pete Smith - <pete@cubabit.net>
