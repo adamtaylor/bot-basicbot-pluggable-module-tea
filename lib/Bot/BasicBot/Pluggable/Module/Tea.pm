@@ -168,3 +168,12 @@ HELPMSG
 Kristian Flint - <bmxkris@cpan.org>
 
 Pete Smith - <pete@cubabit.net>
+
+=begin Pod::Coverage
+
+    select_brew_maker
+    tidy_lists
+
+=end Pod::Coverage
+
+=cut
