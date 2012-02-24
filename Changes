@@ -1,1 +1,6 @@
-Revision history for Bot-BasicBot-Pluggable-Module-Tea
+{{$NEXT}}
+
+- Basic tea bot with support for tea rounds, volunteers, away users,
+  status checks and random tea rounds.
+- The tea round is also reset after 8 hours of inactivity, i.e., the
+  next day.
