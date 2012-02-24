@@ -7,7 +7,7 @@ use List::Util qw(shuffle);
 
 extends 'Bot::BasicBot::Pluggable::Module';
 
-our $VERSION = "0.0011";       
+# VERSION
 
 =head1 NAME
 
