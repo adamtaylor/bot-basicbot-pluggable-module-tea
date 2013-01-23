@@ -42,6 +42,10 @@ sub help {
 
         If you want to see the current tea round status, issue `!tea status`.
 
+        If a user is lurking but not particpating in the round, or fails to
+        make tea, issue `!tea ban <user>`, to have them removed from the round.
+        They are only able to rejoin by volunteering to make a round.
+
         If you want to live on the edge issue the `!tea random` command to have
         someone at random selected to make the tea
 HELPMSG
@@ -49,7 +53,11 @@ HELPMSG
 }
 
 {
+    # List of usersin the tea round
     my @nick_list;
+    # XXX we should store this list
+    # List of ignored/banned users
+    my @ban_list;
     my $last_used = DateTime->now;
 
     sub select_brew_maker {
@@ -72,8 +80,8 @@ HELPMSG
         my @all_nicks = $self->bot->pocoirc->channel_list( $msg->{channel} );
 
         for my $nick (@all_nicks) {
-            # insert new nick if not already in list and isn't the bot itself
-            unless (scalar(grep {$_ eq $nick} @nick_list) || ($nick eq $self->bot->nick)) {
+            # insert new nick if not already in list and isn't the in the ban list
+            unless (scalar(grep {$_ eq $nick} @nick_list) || scalar(grep {$_ eq $nick} @ban_list)) {
                 splice(@nick_list, int(rand(@nick_list - 1)), 0, $nick);
             }
         }
@@ -101,8 +109,11 @@ HELPMSG
         my $chan = $msg->{channel};
 
         my @all_nicks = $self->bot->pocoirc->channel_list( $chan );
-        #init the nick list if we don't have it already
-        $self->chanjoin( $msg ) unless $#nick_list > 0;
+        # init the nick list if we don't have it already
+        $self->chanjoin( $msg ) unless @nick_list;
+        # push the bot's nick into the ban list if it's currently empty
+        push @ban_list, $self->bot->nick unless @ban_list;
+
         my $extra = $self->tidy_lists( $msg->{channel} );
 
         if ( $body =~ /^!tea$/ ) {
@@ -129,6 +140,8 @@ HELPMSG
                 # If you volunteer, go to back of list
                 @nick_list = grep {!/$who/} @nick_list;
                 push @nick_list, $who;
+                # If you were in the ban list, you are now removed
+                @ban_list = grep {!/$who/} @ban_list;
                 return "$who has volunteered to make a round. $who++";
             }
             elsif ( $commands[1] eq 'random' ) {
@@ -145,6 +158,17 @@ HELPMSG
             }
             elsif ( $commands[1] eq 'version' ) {
                 return "This is teabot version $VERSION";
+            }
+            elsif ( $commands[1] eq 'ban' ) {
+                my $user = $commands[2];
+
+                return "The `ban` command expects a user to ban: !tea ban <user>"
+                    unless $user;
+
+                push @ban_list, $user; # push the user to the ban list
+                @nick_list = grep {!/$user/} @nick_list; # remove from user list
+
+                return "$who has banned $user from the tea round. They can rejoin the round by volunteering.";
             }
             else {
                 return "$who-- # Imbecile! [unknown command]";
