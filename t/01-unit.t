@@ -20,7 +20,7 @@ my $bot = Test::Bot::BasicBot::Pluggable->new();
 $bot->load('Tea');
 
 my $tea_response = $bot->tell_indirect('!tea');
-$tea_response =~ /^test_user would like a brew! (.+): your turn!$/;
+$tea_response =~ /^test_user would like a brew! (.+): your turn!/;
 ok( $1 ~~ @test_users, "Returned a user ($1) from the list" );
 
 my $user_just_called = $1;

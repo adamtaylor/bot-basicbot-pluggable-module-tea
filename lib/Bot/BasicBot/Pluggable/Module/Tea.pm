@@ -120,7 +120,7 @@ HELPMSG
 
             my $brew_maker = $self->select_brew_maker( $chan );
 
-            my $resp = "$who would like a brew! $brew_maker: your turn!$extra";
+            my $resp = "$who would like a brew! $brew_maker: your turn! Current members of the round @nick_list. $extra";
             return $resp;
         }
 
