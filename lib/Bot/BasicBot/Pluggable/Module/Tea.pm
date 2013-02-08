@@ -137,12 +137,14 @@ HELPMSG
                 return "$who says $person_away is AWOL. $brew_maker, take over!";
             }
             elsif ( $commands[1] eq 'volunteer' ) {
+                # Reset the list, if needs be
+                $self->tidy_lists( $msg->{channel} );
                 # If you volunteer, go to back of list
                 @nick_list = grep {!/$who/} @nick_list;
                 push @nick_list, $who;
                 # If you were in the ban list, you are now removed
                 @ban_list = grep {!/$who/} @ban_list;
-                return "$who has volunteered to make a round. $who++";
+                return "$who has volunteered to make a round. $who++. Current memebers of the round @nick_list";
             }
             elsif ( $commands[1] eq 'random' ) {
                 # Choose a random nick from the channel
